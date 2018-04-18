@@ -231,9 +231,9 @@ classifier_file.close()
 # save_classifier.close()
 # print('pickled SGDClassifier_classifier')
 
-classifier_file = open('LinearSVC.pickle', 'rb')
-LinearSVC_classifier = pickle.load(classifier_file)
-classifier_file.close()
+# classifier_file = open('LinearSVC.pickle', 'rb')
+# LinearSVC_classifier = pickle.load(classifier_file)
+# classifier_file.close()
 
 # LinearSVC_classifier = SklearnClassifier(LinearSVC())
 # LinearSVC_classifier.train(training_set)
@@ -257,7 +257,7 @@ classifier_file.close()
 # save_classifier.close()
 # print('pickled NuSVC_classifier')
 
-voted_classifier = VoteClassifier(classifier, MNB_classifier, BernoulliNBNB_classifier, LogisticRegression_classifier, SGDClassifier_classifier, LinearSVC_classifier, NuSVC_classifier)
+voted_classifier = VoteClassifier(classifier, MNB_classifier, BernoulliNBNB_classifier, LogisticRegression_classifier, SGDClassifier_classifier, NuSVC_classifier)
 # voted_classifier = VoteClassifier(classifier)
 
 # print('voted_classifier accuracy percent:', (nltk.classify.accuracy(voted_classifier, testing_set))*100)
