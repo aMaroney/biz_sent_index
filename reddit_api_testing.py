@@ -3,6 +3,7 @@ import pymysql
 import sshtunnel
 import time
 import requests
+import re
 import sentiment_mod as sent
 from reddit_api_secret import *
 
@@ -17,43 +18,64 @@ def reddit_API_call(subreddit_name):
 
 
 submission = reddit_API_call('orlando')
-# print(submission.title)
-# print(submission.score)
-# print(submission.selftext)
 
-comment_body_list = []
+submission_body_filtered = []
+submission_score = []
+submission_sent = []
+
+def get_submission():
+    submission_body = submission.selftext
+    submission_body_lower = submission_body.lower()
+    no_special_char = re.sub(r'([^\sa-z])+', '', submission_body_lower)
+    submission_body_filtered.append(no_special_char)
+    submission_score.append(submission.score)
+    return True
+
+get_submission()
+
+comment_body_list_filtered = []
 comment_score_list = []
+comment_sent = []
+
 def get_comments():
     for comment in submission.comments.list():
         comment_score = comment.score
         comment_body = comment.body
-        comment_body_list.append(comment.body)
+        comment_body_lower = comment_body.lower()
+        no_special_char = re.sub(r'([^\sa-z])+', '', comment_body_lower)
+        comment_body_list_filtered.append(no_special_char)
         comment_score_list.append(comment.score)
 
 get_comments()
 
-# print(comment_body_list)
-# submission_body = comment_body_list[0]
-# sentiment_value, confidence = sent.sentiment(submission_body)
-print(comment_body_list[2])
-
 def find_submission_sent():
-    submission_body = comment_body_list[2]
-    sentiment_value, confidence = sent.sentiment(submission_body)
-    print(submission_body, sentiment_value, confidence)
+    for submission_iter in range(len(submission_body_filtered)):
+        try:
+            submission = submission_body_filtered[submission_iter]
+            sentiment_value, confidence = sent.sentiment(submission)
+            submission_sent.append(sentiment_value)
+            # print(submission, sentiment_value, confidence)
+        except Exception as e:
+            submission_sent.append()
     return True
 
 find_submission_sent()
 
 def find_comment_sent():
-    for comment_iter in range(len(comment_body_list)):
-        comment = comment_body_list[comment_iter]
-        sentiment_value, confidence = sent.sentiment(comment)
-        print(comment, sentiment_value, confidence)
+    for comment_iter in range(len(comment_body_list_filtered)):
+        try:
+            comment = comment_body_list_filtered[comment_iter]
+            sentiment_value, confidence = sent.sentiment(comment)
+            comment_sent.append(sentiment_value)
+            # print(comment, sentiment_value, confidence)
+        except Exception as e:
+            if Exception == 'no unique mode; found 2 equally common values':
+                pass
+            else:
+                print(type(e))
     return True
 
-# find_comment_sent()
-
+find_comment_sent()
 
 # for submission in hot_python:
 #     print(dir(submission))
