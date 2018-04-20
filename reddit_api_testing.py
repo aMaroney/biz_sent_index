@@ -18,125 +18,40 @@ def reddit_API_call(subreddit_name):
 
 
 submission = reddit_API_call('orlando')
+print(submission.score)
+dictionary = {}
 
-submission_body_filtered = []
-submission_score = []
-submission_sent = []
-
-def get_submission():
+def write_post_to_keys():
     submission_body = submission.selftext
     submission_body_lower = submission_body.lower()
     no_special_char = re.sub(r'([^\sa-z])+', '', submission_body_lower)
-    submission_body_filtered.append(no_special_char)
-    submission_score.append(submission.score)
-    return True
+    dictionary[no_special_char] = ''
 
-get_submission()
-
-comment_body_list_filtered = []
-comment_score_list = []
-comment_sent = []
-
-def get_comments():
     for comment in submission.comments.list():
         comment_score = comment.score
         comment_body = comment.body
         comment_body_lower = comment_body.lower()
         no_special_char = re.sub(r'([^\sa-z])+', '', comment_body_lower)
-        comment_body_list_filtered.append(no_special_char)
-        comment_score_list.append(comment.score)
+        dictionary[no_special_char] = ''
 
-get_comments()
+write_post_to_keys()
 
 def find_submission_sent():
-    for submission_iter in range(len(submission_body_filtered)):
+    for key in dictionary.keys():
         try:
-            submission = submission_body_filtered[submission_iter]
+            submission = key
             sentiment_value, confidence = sent.sentiment(submission)
-            submission_sent.append(sentiment_value)
+            for key in dictionary.keys():
+                if key == submission:
+                    dictionary[key] = sentiment_value
             # print(submission, sentiment_value, confidence)
         except Exception as e:
-            submission_sent.append()
+            print(e)
     return True
 
 find_submission_sent()
 
-def find_comment_sent():
-    for comment_iter in range(len(comment_body_list_filtered)):
-        try:
-            comment = comment_body_list_filtered[comment_iter]
-            sentiment_value, confidence = sent.sentiment(comment)
-            comment_sent.append(sentiment_value)
-            # print(comment, sentiment_value, confidence)
-        except Exception as e:
-            if Exception == 'no unique mode; found 2 equally common values':
-                pass
-            else:
-                print(type(e))
-    return True
-
-find_comment_sent()
-
-# for submission in hot_python:
-#     print(dir(submission))
-# subreddit_title = (subreddit.title)
-# submission_title = (submission.title)
-# submission_id = (submission.id)
-# submission_score = (submission.score)
-# submission_url = (submission.url)
-# submission_utc_created = (submission.created_utc)
-# submission_text = submission.selftext
-# print('submission_title: ',submission_title)
-# print('submission_score: ', submission_score)
-# print(subreddit_title,'\n',submission_title,'\n',submission_id,'\n',submission_score,'\n',submission_url,'\n',submission_utc_created)
-# for comment in submission.comments.list():
-#     # print(20 * '-')
-#     parent_id = str(comment.parent())
-#     comment_id =  comment.id
-#     comment_score = comment.score
-#     comment_body = comment.body
-#     # print(dir(comment))
-#     comment_time = comment.created_utc
-#     comment_link = comment.permalink
-    # print(subreddit_title, '\n', submission_title, '\n', submission_id, '\n', submission_score, '\n', submission_url,
-    #       '\n', submission_utc_created)
-    # print('comment_score: '+str(comment_score),'\n','comment_body: '+comment_body,'\n')
-    # print('parent_id: '+parent_id,'\n',
-    #                    'comment_id: '+comment_id,'\n',
-    #                                  'comment_score: '+str(comment_score),'\n',
-    #                                                   'comment_body: '+comment_body,'\n',
-    #                                                                   'comment_time: '+str(comment_time),'\n',
-    #                                                                                   'comment_link: '+comment_link)
-    # submission = comment_body
-    # sentiment_value, confidence = sent.sentiment(submission)
-    # print(submission, '\n',sentiment_value, '\n',confidence)
-    # print('-----------------------------------------------------')
-
-    # if confidence * 100 >= 80:
-        # output = open("reddit-out.txt","a")
-        # output.write(sentiment_value)
-        # output.write('\n')
-        # output.close()
-        # print(sentiment_value)
-
-
-# def on_data(data):
-
-
-# submission = submission_title
-# sentiment_value, confidence = sent.sentiment(submission)
-# print(submission, sentiment_value, confidence)
-# submission = submission_text
-# sentiment_value, confidence = sent.sentiment(submission)
-# print('submission_text', sentiment_value, confidence)
-
-# if confidence*100 >= 80:
-    # output = open("reddit-out.txt","a")
-    # output.write(sentiment_value)
-    # output.write('\n')
-    # output.close()
-    # print(sentiment_value)
-# return True
+print(dictionary)
 
 def dbConnectionLocal(host, user, password, database):
     try:
