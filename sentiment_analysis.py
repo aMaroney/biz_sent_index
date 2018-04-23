@@ -6,7 +6,7 @@ def pull_text_and_score_from_table():
     return table_text
 
 table = pull_text_and_score_from_table()
-
+print(table)
 total_votes = 0
 for sub in table:
     total_votes = total_votes + sub[3]
