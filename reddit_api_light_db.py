@@ -1,6 +1,6 @@
 import sshtunnel
 import re
-# import sentiment_mod as sent
+import sentiment_mod as sent
 import db_connection_secret as dbconnect
 from reddit_api_secret import *
 import pickle
@@ -18,12 +18,13 @@ sshtunnel.TUNNEL_TIMEOUT = 5.0
 
 dbconnect.truncateLocalTable('biz_sent_reddit')
 print('cleared table: biz_sent_reddit')
+
 dbconnect.truncateLocalTable('biz_sent_main')
 print('cleared table: biz_sent_main')
 
 def reddit_API_call(subreddit_name):
     subreddit = reddit.subreddit(subreddit_name)
-    submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/88j45i/did_someone_lose_their_dog_found_in_wadeview_park/')
+    submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/8ev7h2/orlando_shining_what_awesome_thing_have_you/')
     # submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/8clikx/i_went_to_taco_maker_mexican_grill_a_new/')
     # submission = reddit.submission(
     #     url='https://www.reddit.com/r/orlando/comments/88inz6/tell_me_switching_to_sprint_is_a_bad_idea/')
@@ -33,6 +34,7 @@ def reddit_API_call(subreddit_name):
 
 
 submission = reddit_API_call('orlando')
+print('api called')
 
 # def insert_text_score_into_remote_table():
 def insert_text_score_into_local_table():
@@ -43,6 +45,7 @@ def insert_text_score_into_local_table():
     reddit_score = submission.score
     data = submission_body_processed, reddit_score
     dbconnect.dbLocalInsert(execute, data)
+    print('local insert 1')
     # dbconnect.dbRemoteInsert(execute, data)
     for comment in submission.comments.list():
         comment_score = comment.score
@@ -52,11 +55,12 @@ def insert_text_score_into_local_table():
         reddit_score = comment_score = comment.score
         data = comment_body_lower, reddit_score
         dbconnect.dbLocalInsert(execute, data)
+        print('local insert 2')
         # dbconnect.dbRemoteInsert(execute, data)
 
 # insert_text_score_into_remote_table()
-# insert_text_score_into_local_table()
-# print('inserted into local reddit table')
+insert_text_score_into_local_table()
+print('inserted into local reddit table')
 
 # insert_text_score_into_remote_table()
 # print('inserted into remote reddit table')
@@ -66,9 +70,6 @@ def pull_text_and_score_from_table():
     # table_text = dbconnect.dbRemotePull(execute)
     table_text = dbconnect.dbLocalPull(execute)
     return table_text
-
-#dictionary[text] = sentiment_value
-
 
 def find_sent():
     tuper = ()
@@ -84,13 +85,13 @@ def find_sent():
     return tuper
 
 
-# sent_result = find_sent()
-# print('found the sentiment')
-#
-# pickle_out = open('testing.pickle', 'wb')
-# pickle.dump(sent_result, pickle_out)
-# pickle_out.close()
-# print('pickled test')
+sent_result = find_sent()
+print('found the sentiment')
+
+pickle_out = open('testing.pickle', 'wb')
+pickle.dump(sent_result, pickle_out)
+pickle_out.close()
+print('pickled test')
 
 pickle_in = open('testing.pickle', 'rb')
 testing_file = pickle.load(pickle_in)
@@ -100,12 +101,14 @@ def sentiment_izer(data_set):
     total_votes = 0
     for sub in data_set:
         total_votes = total_votes + sub[1]
+    print('total votes:',total_votes)
 
     pos = 0
     neg = 0
     for review in data_set:
         for i in range(len(data_set)):
             # print(table[i])
+            print(data_set[i])
             if data_set[i][2] == 'neg':
                 if data_set[i][0] == '':
                     print('blank text for submission or comment')
@@ -129,13 +132,13 @@ def sentiment_izer(data_set):
                     pass
                 else:
                     scale_with_conf = data_set[i][3] * 1
-                    # print(scale_with_conf)
+                    print(scale_with_conf)
                     vote_scaler = 1 + (data_set[i][1] / total_votes)
-                    # print(vote_scaler)
+                    print(vote_scaler)
                     scale_with_vote = float(scale_with_conf) * vote_scaler
-                    # print(scale_with_vote)
+                    print(scale_with_vote)
                     final_sent = 1.0 * float(scale_with_vote)
-                    # print(final_sent)
+                    print(final_sent)
                     pos = pos + final_sent
 
     print('\n')
@@ -157,5 +160,5 @@ def write_everything_to_main_table():
         # dbconnect.dbRemoteInsert(execute, data)
         dbconnect.dbLocalInsert(execute, data)
 
-# write_everything_to_main_table()
-# print('inserted everything into the main table')
+write_everything_to_main_table()
+print('inserted everything into the main table')
