@@ -24,7 +24,7 @@ print('cleared table: biz_sent_main')
 
 def reddit_API_call(subreddit_name):
     subreddit = reddit.subreddit(subreddit_name)
-    submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/8ev7h2/orlando_shining_what_awesome_thing_have_you/')
+    submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/8en179/is_aloma_area_a_goodsafe_place_to_live/')
     # submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/8clikx/i_went_to_taco_maker_mexican_grill_a_new/')
     # submission = reddit.submission(
     #     url='https://www.reddit.com/r/orlando/comments/88inz6/tell_me_switching_to_sprint_is_a_bad_idea/')
@@ -53,7 +53,7 @@ def insert_text_score_into_local_table():
         comment_body_lower = comment_body.lower()
         comment_body_processed = re.sub(r'([^\sa-z])+', '', comment_body_lower)
         reddit_score = comment_score = comment.score
-        data = comment_body_lower, reddit_score
+        data = comment_body_processed, reddit_score
         dbconnect.dbLocalInsert(execute, data)
         print('local insert 2')
         # dbconnect.dbRemoteInsert(execute, data)
@@ -84,6 +84,8 @@ def find_sent():
                 pass
     return tuper
 
+def find_freq_dist():
+    pass
 
 sent_result = find_sent()
 print('found the sentiment')
@@ -105,41 +107,40 @@ def sentiment_izer(data_set):
 
     pos = 0
     neg = 0
-    for review in data_set:
-        for i in range(len(data_set)):
-            # print(table[i])
-            print(data_set[i])
-            if data_set[i][2] == 'neg':
-                if data_set[i][0] == '':
-                    print('blank text for submission or comment')
-                    pass
-                if float(data_set[i][3]) < 0.85:
-                    print('low confidence')
-                    pass
-                else:
-                    scale_with_conf = data_set[i][3] * 1
-                    print(scale_with_conf)
-                    vote_scaler = 1 + (data_set[i][1] / total_votes)
-                    print(vote_scaler)
-                    scale_with_vote = float(scale_with_conf) * vote_scaler
-                    print(scale_with_vote)
-                    final_sent = -1.0 * float(scale_with_vote)
-                    print(final_sent)
-                    neg = neg + final_sent
-            if data_set[i][2] == 'pos':
-                if data_set[i][0] == '':
-                    print('blank text for submission or comment')
-                    pass
-                else:
-                    scale_with_conf = data_set[i][3] * 1
-                    print(scale_with_conf)
-                    vote_scaler = 1 + (data_set[i][1] / total_votes)
-                    print(vote_scaler)
-                    scale_with_vote = float(scale_with_conf) * vote_scaler
-                    print(scale_with_vote)
-                    final_sent = 1.0 * float(scale_with_vote)
-                    print(final_sent)
-                    pos = pos + final_sent
+    for i in range(len(data_set)):
+        # print(table[i])
+        print(data_set[i])
+        if data_set[i][2] == 'neg':
+            if data_set[i][0] == '':
+                print('blank text for submission or comment')
+                pass
+            if float(data_set[i][3]) < 0.85:
+                print('low confidence')
+                pass
+            else:
+                scale_with_conf = data_set[i][3] * 1
+                print(scale_with_conf)
+                vote_scaler = 1 + (data_set[i][1] / total_votes)
+                print(vote_scaler)
+                scale_with_vote = float(scale_with_conf) * vote_scaler
+                print(scale_with_vote)
+                final_sent = -1.0 * float(scale_with_vote)
+                print(final_sent)
+                neg = neg + final_sent
+        if data_set[i][2] == 'pos':
+            if data_set[i][0] == '':
+                print('blank text for submission or comment')
+                pass
+            else:
+                scale_with_conf = data_set[i][3] * 1
+                print(scale_with_conf)
+                vote_scaler = 1 + (data_set[i][1] / total_votes)
+                print(vote_scaler)
+                scale_with_vote = float(scale_with_conf) * vote_scaler
+                print(scale_with_vote)
+                final_sent = 1.0 * float(scale_with_vote)
+                print(final_sent)
+                pos = pos + final_sent
 
     print('\n')
     print('total positive sentiment: ',pos)
