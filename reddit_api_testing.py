@@ -13,10 +13,10 @@ sshtunnel.TUNNEL_TIMEOUT = 5.0
 
 def reddit_API_call(subreddit_name):
     subreddit = reddit.subreddit(subreddit_name)
-    # submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/8eb2mv/looking_for_a_pet_photographer/')
+    submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/8eb2mv/looking_for_a_pet_photographer/')
     # submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/8clikx/i_went_to_taco_maker_mexican_grill_a_new/')
-    submission = reddit.submission(
-        url='https://www.reddit.com/r/orlando/comments/8en179/is_aloma_area_a_goodsafe_place_to_live/')
+    # submission = reddit.submission(
+        # url='https://www.reddit.com/r/orlando/comments/8en179/is_aloma_area_a_goodsafe_place_to_live/')
     # submission = reddit.submission(
         # url='https://www.reddit.com/r/orlando/comments/8d8wqi/voodoo_donut_dont_believe_the_hype/')
     return submission
@@ -55,7 +55,6 @@ def find_sent():
         except Exception as e:
             # print(e)
             pass
-
     return lister
 
 find_sent()
