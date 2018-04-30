@@ -3,6 +3,7 @@ import re
 import sentiment_mod as sent
 import db_connection_secret as dbconnect
 from reddit_api_secret import *
+import featured_words_mod as featuredWords
 import pickle
 
 
@@ -11,19 +12,23 @@ sshtunnel.TUNNEL_TIMEOUT = 5.0
 
 # hot_python = subreddit.hot(limit = 4)
 
-def reddit_API_call(subreddit_name):
-    subreddit = reddit.subreddit(subreddit_name)
-    submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/8eb2mv/looking_for_a_pet_photographer/')
-    # submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/8clikx/i_went_to_taco_maker_mexican_grill_a_new/')
-    # submission = reddit.submission(
-        # url='https://www.reddit.com/r/orlando/comments/8en179/is_aloma_area_a_goodsafe_place_to_live/')
-    # submission = reddit.submission(
-        # url='https://www.reddit.com/r/orlando/comments/8d8wqi/voodoo_donut_dont_believe_the_hype/')
-    return submission
+# def reddit_post_fetch(subreddit_name):
+#     subreddit = reddit.subreddit(subreddit_name)
+#     # submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/82bon7/review_sunrail_to_the_airport_and_back/')
+#     # submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/5wlsd7/i_used_to_work_at_a_restaurant_in_thornton_park/')
+#     # submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/8ftelr/might_be_old_news_but_orlando_sentinel/   ')
+#     # submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/88inz6/tell_me_switching_to_sprint_is_a_bad_idea/')
+#     # submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/8clikx/i_went_to_taco_maker_mexican_grill_a_new/')
+#     # submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/8en179/is_aloma_area_a_goodsafe_place_to_live/')
+#     submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/8d8wqi/voodoo_donut_dont_believe_the_hype/')
+#     return submission
 
-submission = reddit_API_call('orlando')
+# submission = reddit_post_fetch('orlando')
+# print(submission)
 
-def find_sent():
+
+def find_sent(submissionID):
+    submission = submissionID
     tuper = ()
     lister = []
     submission_body = submission.selftext
@@ -34,13 +39,9 @@ def find_sent():
         sentiment_value, confidence = sent.sentiment(submission_body_processed)
         tuper = (submission_body, reddit_score, sentiment_value, confidence)
         lister.append(tuper)
-        # print(sentiment_value)
     except Exception as e:
-        # print(e)
         pass
 
-    # tuper = (submission_body_processed, reddit_score, sentiment_value, confidence)
-    # lister.append(tuper)
     for comment in submission.comments.list():
         comment_score = comment.score
         comment_body = comment.body
@@ -57,18 +58,16 @@ def find_sent():
             pass
     return lister
 
-find_sent()
-
-# pickle_out = open('testing.pickle', 'wb')
-# pickle.dump(sent_result, pickle_out)
-# pickle_out.close()
-# print('pickled test')
-
 pickle_in = open('testing.pickle', 'rb')
 testing_file = pickle.load(pickle_in)
 pickle_in.close()
 
-testing_file = find_sent()
+# testing_file = find_sent()
+
+pickle_out = open('testing.pickle', 'wb')
+pickle.dump(testing_file, pickle_out)
+pickle_out.close()
+print('pickled test')
 
 def sentiment_izer(data_set):
     total_votes = 0
@@ -79,7 +78,6 @@ def sentiment_izer(data_set):
     pos = 0
     neg = 0
     for i in range(len(data_set)):
-        print(data_set[i])
         if data_set[i][2] == 'neg':
             if data_set[i][0] == '':
                 print('blank text for submission or comment')
@@ -88,6 +86,7 @@ def sentiment_izer(data_set):
                 print('low confidence')
                 pass
             else:
+                print(data_set[i])
                 scale_with_conf = data_set[i][3] * 1
                 print(scale_with_conf)
                 vote_scaler = 1 + (data_set[i][1] / total_votes)
@@ -102,6 +101,7 @@ def sentiment_izer(data_set):
                 print('blank text for submission or comment')
                 pass
             else:
+                print(data_set[i])
                 scale_with_conf = data_set[i][3] * 1
                 print(scale_with_conf)
                 vote_scaler = 1 + (data_set[i][1] / total_votes)
@@ -115,15 +115,22 @@ def sentiment_izer(data_set):
     print('\n')
     print('total positive sentiment: ',pos)
     print('total negative sentiment: ',neg)
+    print('\n')
 
+cars = reddit.subreddit("orlando")
+for submission in cars.search("sprint", limit=2):
+    # submission = submission
+    testing_file = find_sent(submission)
+    sentiment_izer(testing_file)
 
-sentiment_izer(testing_file)
+# word_features = featuredWords.feature_words(testing_file,20)
+# print(word_features)
 
-dbconnect.truncateLocalTable('biz_sent_reddit')
-print('cleared table: biz_sent_reddit')
-
-dbconnect.truncateLocalTable('biz_sent_main')
-print('cleared table: biz_sent_main')
+# dbconnect.truncateLocalTable('biz_sent_reddit')
+# print('cleared table: biz_sent_reddit')
+#
+# dbconnect.truncateLocalTable('biz_sent_main')
+# print('cleared table: biz_sent_main')
 
 def write_everything_to_main_table():
     # execute = ("INSERT INTO biz_sent_main (reddit_text, sentiment, confidence, reddit_score) VALUES (%s,%s,%s,%s)")
