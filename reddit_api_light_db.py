@@ -3,18 +3,16 @@ import re
 import sentiment_mod as sent
 import db_connection_secret as dbconnect
 from reddit_api_secret import *
+import featured_words_mod as featuredWords
 import pickle
-
 
 sshtunnel.SSH_TIMEOUT = 5.0
 sshtunnel.TUNNEL_TIMEOUT = 5.0
 
-# hot_python = subreddit.hot(limit = 4)
-
-# dbconnect.truncateRemoteTable('biz_sent_reddit')
-# print('cleared table: biz_sent_reddit')
-# dbconnect.truncateRemoteTable('biz_sent_main')
-# print('cleared table: biz_sent_main')
+dbconnect.truncateRemoteTable('biz_sent_reddit')
+print('cleared table: biz_sent_reddit')
+dbconnect.truncateRemoteTable('biz_sent_main')
+print('cleared table: biz_sent_main')
 
 dbconnect.truncateLocalTable('biz_sent_reddit')
 print('cleared table: biz_sent_reddit')
@@ -24,7 +22,9 @@ print('cleared table: biz_sent_main')
 
 def reddit_API_call(subreddit_name):
     subreddit = reddit.subreddit(subreddit_name)
-    submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/8en179/is_aloma_area_a_goodsafe_place_to_live/')
+    # submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/8en179/is_aloma_area_a_goodsafe_place_to_live/')
+    submission = reddit.submission(
+        url='https://www.reddit.com/r/orlando/comments/5wlsd7/i_used_to_work_at_a_restaurant_in_thornton_park/')
     # submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/8clikx/i_went_to_taco_maker_mexican_grill_a_new/')
     # submission = reddit.submission(
     #     url='https://www.reddit.com/r/orlando/comments/88inz6/tell_me_switching_to_sprint_is_a_bad_idea/')
@@ -46,7 +46,6 @@ def insert_text_score_into_local_table():
     data = submission_body_processed, reddit_score
     dbconnect.dbLocalInsert(execute, data)
     print('local insert 1')
-    # dbconnect.dbRemoteInsert(execute, data)
     for comment in submission.comments.list():
         comment_score = comment.score
         comment_body = comment.body
@@ -56,18 +55,12 @@ def insert_text_score_into_local_table():
         data = comment_body_processed, reddit_score
         dbconnect.dbLocalInsert(execute, data)
         print('local insert 2')
-        # dbconnect.dbRemoteInsert(execute, data)
 
-# insert_text_score_into_remote_table()
 insert_text_score_into_local_table()
 print('inserted into local reddit table')
 
-# insert_text_score_into_remote_table()
-# print('inserted into remote reddit table')
-
 def pull_text_and_score_from_table():
     execute = """SELECT reddit_text, reddit_score FROM biz_sent_reddit"""
-    # table_text = dbconnect.dbRemotePull(execute)
     table_text = dbconnect.dbLocalPull(execute)
     return table_text
 
@@ -108,7 +101,6 @@ def sentiment_izer(data_set):
     pos = 0
     neg = 0
     for i in range(len(data_set)):
-        # print(table[i])
         print(data_set[i])
         if data_set[i][2] == 'neg':
             if data_set[i][0] == '':
@@ -149,9 +141,7 @@ def sentiment_izer(data_set):
 sentiment_izer(testing_file)
 
 def write_everything_to_main_table():
-    # execute = ("INSERT INTO biz_sent_main (reddit_text, sentiment, confidence, reddit_score) VALUES (%s,%s,%s,%s)")
     execute = ("INSERT INTO biz_sent_main (reddit_text, sentiment, confidence, reddit_score) VALUES (%s,%s,%s,%s)")
-    # for i in range(len(dictionary))
     for tup in range(len(testing_file)):
         text = testing_file[tup][0]
         reddit_score = testing_file[tup][1]
@@ -163,3 +153,6 @@ def write_everything_to_main_table():
 
 write_everything_to_main_table()
 print('inserted everything into the main table')
+
+word_features = featuredWords.feature_words(testing_file,20)
+print(word_features)
