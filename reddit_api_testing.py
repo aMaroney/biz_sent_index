@@ -6,26 +6,12 @@ from reddit_api_secret import *
 import featured_words_mod as featuredWords
 import pickle
 
-
 sshtunnel.SSH_TIMEOUT = 5.0
 sshtunnel.TUNNEL_TIMEOUT = 5.0
 
-# hot_python = subreddit.hot(limit = 4)
-
-# def reddit_post_fetch(subreddit_name):
-#     subreddit = reddit.subreddit(subreddit_name)
-#     # submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/82bon7/review_sunrail_to_the_airport_and_back/')
-#     # submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/5wlsd7/i_used_to_work_at_a_restaurant_in_thornton_park/')
-#     # submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/8ftelr/might_be_old_news_but_orlando_sentinel/   ')
-#     # submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/88inz6/tell_me_switching_to_sprint_is_a_bad_idea/')
-#     # submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/8clikx/i_went_to_taco_maker_mexican_grill_a_new/')
-#     # submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/8en179/is_aloma_area_a_goodsafe_place_to_live/')
-#     submission = reddit.submission(url='https://www.reddit.com/r/orlando/comments/8d8wqi/voodoo_donut_dont_believe_the_hype/')
-#     return submission
-
-# submission = reddit_post_fetch('orlando')
-# print(submission)
-
+def reddit_post_fetch(post_url):
+    submission = reddit.submission(url=post_url)
+    return submission
 
 def find_sent(submissionID):
     submission = submissionID
@@ -62,12 +48,11 @@ pickle_in = open('testing.pickle', 'rb')
 testing_file = pickle.load(pickle_in)
 pickle_in.close()
 
-# testing_file = find_sent()
+# testing_file = find_sent(submission)
 
 pickle_out = open('testing.pickle', 'wb')
 pickle.dump(testing_file, pickle_out)
 pickle_out.close()
-print('pickled test')
 
 def sentiment_izer(data_set):
     total_votes = 0
@@ -80,51 +65,80 @@ def sentiment_izer(data_set):
     for i in range(len(data_set)):
         if data_set[i][2] == 'neg':
             if data_set[i][0] == '':
-                print('blank text for submission or comment')
+                # print('blank text for submission or comment')
                 pass
             if float(data_set[i][3]) < 0.85:
-                print('low confidence')
+                # print('low confidence')
                 pass
             else:
-                print(data_set[i])
+                # print(data_set[i])
                 scale_with_conf = data_set[i][3] * 1
-                print(scale_with_conf)
+                # print(scale_with_conf)
                 vote_scaler = 1 + (data_set[i][1] / total_votes)
-                print(vote_scaler)
+                # print(vote_scaler)
                 scale_with_vote = float(scale_with_conf) * vote_scaler
-                print(scale_with_vote)
+                # print(scale_with_vote)
                 final_sent = -1.0 * float(scale_with_vote)
-                print(final_sent)
+                # print(final_sent)
                 neg = neg + final_sent
         if data_set[i][2] == 'pos':
             if data_set[i][0] == '':
-                print('blank text for submission or comment')
+                # print('blank text for submission or comment')
                 pass
             else:
-                print(data_set[i])
+                # print(data_set[i])
                 scale_with_conf = data_set[i][3] * 1
-                print(scale_with_conf)
+                # print(scale_with_conf)
                 vote_scaler = 1 + (data_set[i][1] / total_votes)
-                print(vote_scaler)
+                # print(vote_scaler)
                 scale_with_vote = float(scale_with_conf) * vote_scaler
-                print(scale_with_vote)
+                # print(scale_with_vote)
                 final_sent = 1.0 * float(scale_with_vote)
-                print(final_sent)
+                # print(final_sent)
                 pos = pos + final_sent
+    # print('\n')
+    print('total positive sentiment:',pos)
+    print('total negative sentiment:',neg)
+    # print('\n')
+    net_sent = pos + neg
+    if net_sent > 0:
+        print('Positive Sentiment, net sentiments is', net_sent)
+    elif net_sent < 0:
+        print('Negative Sentiment, net sentiment is', net_sent)
+    else:
+        print('Your Net Sentiment is zero or something went wrong with the analysis')
 
-    print('\n')
-    print('total positive sentiment: ',pos)
-    print('total negative sentiment: ',neg)
-    print('\n')
+def search_subreddit(subreddit_name, search_term, number_of_results, number_of_top_words):
+    search = reddit.subreddit(subreddit_name)
+    for submission in search.search(search_term, limit=number_of_results):
+        submission_name = submission.title
+        print('Submission Title:',submission_name)
 
-cars = reddit.subreddit("orlando")
-for submission in cars.search("sprint", limit=2):
-    # submission = submission
-    testing_file = find_sent(submission)
-    sentiment_izer(testing_file)
+        submission_linked_url = submission.url
+        submission_url = submission.permalink
+        print('Submission url:','https://www.reddit.com'+str(submission_url))
+        if submission_linked_url != submission_url:
+            print('Linked website from submission:',submission_linked_url)
 
-# word_features = featuredWords.feature_words(testing_file,20)
-# print(word_features)
+        testing_file = find_sent(submission)
+
+        sentiment_izer(testing_file)
+
+        word_features = featuredWords.feature_words(testing_file, number_of_top_words)
+        print(word_features)
+        print('\n')
+
+
+search_subreddit('orlando', 'sprint', 3, 10)
+
+
+# submission = reddit_post_fetch('https://www.reddit.com/r/orlando/comments/82bon7/review_sunrail_to_the_airport_and_back/')
+# submission = reddit_post_fetch('https://www.reddit.com/r/orlando/comments/5wlsd7/i_used_to_work_at_a_restaurant_in_thornton_park/')
+# submission = reddit_post_fetch('https://www.reddit.com/r/orlando/comments/8ftelr/might_be_old_news_but_orlando_sentinel/ ')
+# submission = reddit_post_fetch('https://www.reddit.com/r/orlando/comments/88inz6/tell_me_switching_to_sprint_is_a_bad_idea/')
+# submission = reddit_post_fetch('https://www.reddit.com/r/orlando/comments/8clikx/i_went_to_taco_maker_mexican_grill_a_new/')
+# submission = reddit_post_fetch('https://www.reddit.com/r/orlando/comments/8en179/is_aloma_area_a_goodsafe_place_to_live/')
+# submission = reddit_post_fetch('https://www.reddit.com/r/orlando/comments/8d8wqi/voodoo_donut_dont_believe_the_hype/')
 
 # dbconnect.truncateLocalTable('biz_sent_reddit')
 # print('cleared table: biz_sent_reddit')
