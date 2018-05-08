@@ -64,33 +64,49 @@ def pull_text_and_score_from_table():
     table_text = dbconnect.dbLocalPull(execute)
     return table_text
 
-def find_sent():
+def find_sent(submissionID):
+    submission = submissionID
     tuper = ()
-    table_text = pull_text_and_score_from_table()
-    for i in range(len(table_text)):
-        for text in table_text:
+    lister = []
+    submission_body = submission.selftext
+    submission_body_lower = submission_body.lower()
+    submission_body_processed = re.sub(r'([^\sa-z])+', '', submission_body_lower)
+    reddit_score = submission.score
+    try:
+        sentiment_value, confidence = sent.sentiment(submission_body_processed)
+        tuper = (submission_body, reddit_score, sentiment_value, confidence)
+        lister.append(tuper)
+    except:
+        pass
+
+    for comment in submission.comments.list():
+        try:
+            comment_score = comment.score
+            comment_body = comment.body
+            comment_body_lower = comment_body.lower()
+            comment_body_processed = re.sub(r'([^\sa-z])+', '', comment_body_lower)
+            reddit_score = comment_score
             try:
-                sentiment_value, confidence = sent.sentiment(text[i])
-                text = text + (sentiment_value, confidence)
-                tuper = tuper + (text,)
-            except Exception as e:
+                sentiment_value, confidence = sent.sentiment(comment_body_processed)
+                tuper = (comment_body, reddit_score, sentiment_value, confidence)
+                lister.append(tuper)
+            except:
                 pass
-    return tuper
+        except:
+            pass
 
-def find_freq_dist():
-    pass
+    return lister
 
-sent_result = find_sent()
-print('found the sentiment')
-
-pickle_out = open('testing.pickle', 'wb')
-pickle.dump(sent_result, pickle_out)
-pickle_out.close()
-print('pickled test')
 
 pickle_in = open('testing.pickle', 'rb')
 testing_file = pickle.load(pickle_in)
 pickle_in.close()
+
+# testing_file = find_sent(submission)
+
+pickle_out = open('testing.pickle', 'wb')
+pickle.dump(testing_file, pickle_out)
+pickle_out.close()
 
 def sentiment_izer(data_set):
     total_votes = 0
@@ -138,7 +154,28 @@ def sentiment_izer(data_set):
     print('total positive sentiment: ',pos)
     print('total negative sentiment: ',neg)
 
-sentiment_izer(testing_file)
+def search_subreddit(subreddit_name, search_term, number_of_results, number_of_top_words):
+    search = reddit.subreddit(subreddit_name)
+    for submission in search.search(search_term, limit=number_of_results):
+        submission_name = submission.title
+        print('Submission Title:',submission_name)
+
+        submission_linked_url = submission.url
+        submission_url = submission.permalink
+        print('Submission url:','https://www.reddit.com'+str(submission_url))
+        if submission_linked_url != submission_url:
+            print('Linked website from submission:',submission_linked_url)
+
+        testing_file = find_sent(submission)
+
+        sentiment_izer(testing_file)
+
+        word_features = featuredWords.feature_words(testing_file, number_of_top_words)
+        print(word_features)
+        print('\n')
+
+
+search_subreddit('orlando', 'tacos', 1, 1)
 
 def write_everything_to_main_table():
     execute = ("INSERT INTO biz_sent_main (reddit_text, sentiment, confidence, reddit_score) VALUES (%s,%s,%s,%s)")
