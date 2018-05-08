@@ -131,7 +131,7 @@ def search_subreddit(subreddit_name, search_term, number_of_results, number_of_t
         print('\n')
 
 
-search_subreddit('news', 'marijuana', 3, 10)
+search_subreddit('news', 'infrastructure', 3, 10)
 
 
 # submission = reddit_post_fetch('https://www.reddit.com/r/orlando/comments/82bon7/review_sunrail_to_the_airport_and_back/')
