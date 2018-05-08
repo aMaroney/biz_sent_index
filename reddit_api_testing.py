@@ -25,23 +25,25 @@ def find_sent(submissionID):
         sentiment_value, confidence = sent.sentiment(submission_body_processed)
         tuper = (submission_body, reddit_score, sentiment_value, confidence)
         lister.append(tuper)
-    except Exception as e:
+    except:
         pass
 
     for comment in submission.comments.list():
-        comment_score = comment.score
-        comment_body = comment.body
-        comment_body_lower = comment_body.lower()
-        comment_body_processed = re.sub(r'([^\sa-z])+', '', comment_body_lower)
-        reddit_score = comment_score
         try:
-            sentiment_value, confidence = sent.sentiment(comment_body_processed)
-            tuper = (comment_body, reddit_score, sentiment_value, confidence)
-            lister.append(tuper)
-            # print(sentiment_value)
-        except Exception as e:
-            # print(e)
+            comment_score = comment.score
+            comment_body = comment.body
+            comment_body_lower = comment_body.lower()
+            comment_body_processed = re.sub(r'([^\sa-z])+', '', comment_body_lower)
+            reddit_score = comment_score
+            try:
+                sentiment_value, confidence = sent.sentiment(comment_body_processed)
+                tuper = (comment_body, reddit_score, sentiment_value, confidence)
+                lister.append(tuper)
+            except:
+                pass
+        except:
             pass
+
     return lister
 
 pickle_in = open('testing.pickle', 'rb')
@@ -129,7 +131,7 @@ def search_subreddit(subreddit_name, search_term, number_of_results, number_of_t
         print('\n')
 
 
-search_subreddit('orlando', 'sprint', 3, 10)
+search_subreddit('news', 'marijuana', 3, 10)
 
 
 # submission = reddit_post_fetch('https://www.reddit.com/r/orlando/comments/82bon7/review_sunrail_to_the_airport_and_back/')
