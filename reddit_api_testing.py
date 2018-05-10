@@ -5,6 +5,7 @@ import db_connection_secret as dbconnect
 from reddit_api_secret import *
 import featured_words_mod as featuredWords
 import pickle
+import pprint
 
 sshtunnel.SSH_TIMEOUT = 5.0
 sshtunnel.TUNNEL_TIMEOUT = 5.0
@@ -112,7 +113,11 @@ def sentiment_izer(data_set):
 
 def search_subreddit(subreddit_name, search_term, number_of_results, number_of_top_words):
     search = reddit.subreddit(subreddit_name)
-    for submission in search.search(search_term, limit=number_of_results):
+    iterator = search.search(search_term, limit=number_of_results)
+    print(dir(iterator))
+    print(iterator.__init__)
+    # pprint.pprint(vars(iterator))
+    for submission in iterator:
         submission_name = submission.title
         print('Submission Title:',submission_name)
 
@@ -131,7 +136,8 @@ def search_subreddit(subreddit_name, search_term, number_of_results, number_of_t
         print('\n')
 
 
-search_subreddit('news', 'infrastructure', 3, 10)
+search_subreddit('vanlife', 'pee', 1, 1)
+search_subreddit('vanlife', 'pee bottle', 1, 1)
 
 
 # submission = reddit_post_fetch('https://www.reddit.com/r/orlando/comments/82bon7/review_sunrail_to_the_airport_and_back/')
