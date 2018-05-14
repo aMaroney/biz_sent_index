@@ -7,6 +7,8 @@ import featured_words_mod as featuredWords
 import pickle
 import pprint
 
+full_return = []
+
 sshtunnel.SSH_TIMEOUT = 5.0
 sshtunnel.TUNNEL_TIMEOUT = 5.0
 
@@ -61,7 +63,8 @@ def sentiment_izer(data_set):
     total_votes = 0
     for sub in data_set:
         total_votes = total_votes + sub[1]
-    print('total votes:', total_votes)
+    total_votes_return  = 'total votes:', total_votes
+    print(total_votes_return)
 
     pos = 0
     neg = 0
@@ -100,23 +103,31 @@ def sentiment_izer(data_set):
                 # print(final_sent)
                 pos = pos + final_sent
     # print('\n')
-    print('total positive sentiment:',pos)
-    print('total negative sentiment:',neg)
+    total_pos = 'total positive sentiment:',pos
+    total_neg = 'total negative sentiment:',neg
+    print(total_pos)
+    print(total_neg)
     # print('\n')
     net_sent = pos + neg
+    net_sent_final = ''
     if net_sent > 0:
-        print('Positive Sentiment, net sentiments is', net_sent)
+        net_sent_return = 'Positive Sentiment, net sentiments is', net_sent
+        net_sent_final += str(net_sent_return)
+        print(net_sent_return)
     elif net_sent < 0:
-        print('Negative Sentiment, net sentiment is', net_sent)
+        net_sent_return = 'Negative Sentiment, net sentiment is', net_sent
+        net_sent_final += str(net_sent_return)
+        print(net_sent_return)
     else:
         print('Your Net Sentiment is zero or something went wrong with the analysis')
+    full_return.append(total_votes_return)
+    full_return.append(total_pos)
+    full_return.append(total_neg)
+    full_return.append(net_sent_final)
 
 def search_subreddit(subreddit_name, search_term, number_of_results, number_of_top_words):
     search = reddit.subreddit(subreddit_name)
     iterator = search.search(search_term, limit=number_of_results)
-    print(dir(iterator))
-    print(iterator.__init__)
-    # pprint.pprint(vars(iterator))
     for submission in iterator:
         submission_name = submission.title
         print('Submission Title:',submission_name)
@@ -130,23 +141,21 @@ def search_subreddit(subreddit_name, search_term, number_of_results, number_of_t
         testing_file = find_sent(submission)
 
         sentiment_izer(testing_file)
+        full_return.append(submission_name)
+        full_return.append(submission_linked_url)
+        full_return.append(submission_url)
 
-        word_features = featuredWords.feature_words(testing_file, number_of_top_words)
-        print(word_features)
-        print('\n')
+sub_return = search_subreddit('orlando', 'sprint', 10, 1)
 
+#testing for web app interface
+# print(full_return)
 
-search_subreddit('vanlife', 'pee', 1, 1)
-search_subreddit('vanlife', 'pee bottle', 1, 1)
+#this check isn't really needed for the command line version
+# if sub_return is None:
+#     print('No results were found for your search term and subreddit combination')
+# else:
+#     pass
 
-
-# submission = reddit_post_fetch('https://www.reddit.com/r/orlando/comments/82bon7/review_sunrail_to_the_airport_and_back/')
-# submission = reddit_post_fetch('https://www.reddit.com/r/orlando/comments/5wlsd7/i_used_to_work_at_a_restaurant_in_thornton_park/')
-# submission = reddit_post_fetch('https://www.reddit.com/r/orlando/comments/8ftelr/might_be_old_news_but_orlando_sentinel/ ')
-# submission = reddit_post_fetch('https://www.reddit.com/r/orlando/comments/88inz6/tell_me_switching_to_sprint_is_a_bad_idea/')
-# submission = reddit_post_fetch('https://www.reddit.com/r/orlando/comments/8clikx/i_went_to_taco_maker_mexican_grill_a_new/')
-# submission = reddit_post_fetch('https://www.reddit.com/r/orlando/comments/8en179/is_aloma_area_a_goodsafe_place_to_live/')
-# submission = reddit_post_fetch('https://www.reddit.com/r/orlando/comments/8d8wqi/voodoo_donut_dont_believe_the_hype/')
 
 # dbconnect.truncateLocalTable('biz_sent_reddit')
 # print('cleared table: biz_sent_reddit')
