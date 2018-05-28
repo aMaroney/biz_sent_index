@@ -8,31 +8,47 @@ import pickle
 import time
 
 full_return = []
+post_return = []
+time_stamp = []
 sshtunnel.SSH_TIMEOUT = 5.0
 sshtunnel.TUNNEL_TIMEOUT = 5.0
-
-# dbconnect.truncateLocalTable('biz_sent_reddit')
-# print('cleared table: biz_sent_reddit')
 
 dbconnect.truncateLocalTable('biz_sent_main')
 print('cleared table: biz_sent_main')
 
 def write_everything_to_main_table():
-    # execute = ("INSERT INTO biz_sent_main (reddit_text, sentiment, confidence, reddit_score) VALUES (%s,%s,%s,%s)")
     print('beginning write to database')
-    execute = ("INSERT INTO biz_sent_main (date_time_stamp, post_title, link_to_post, reddit_path_to_post, total_votes, net_sentiment) VALUES (%s,%s,%s,%s,%s,%s)")
-    # for i in range(len(dictionary))
-    for tup in range(len(full_return)):
-        # print(full_return[tup])
-        time_stamp = full_return[0]
-        post_title = full_return[1]
-        link_to_post = full_return[2]
-        reddit_path_to_post = full_return[3]
-        total_votes = full_return[4]
-        total_pos_votes = full_return[5]
-        total_neg_votes = full_return[6]
-        net_sentiment = full_return[7]
-        data = time_stamp,post_title,link_to_post,reddit_path_to_post,total_votes,net_sentiment
+    execute = ("INSERT INTO "
+               "biz_sent_main "
+               "(date_time_stamp, post_title, link_to_post, reddit_path_to_post, reddit_post_id, total_votes, net_sentiment) "
+               "VALUES (%s,%s,%s,%s,%s,%s,%s)")
+    time_stamp = full_return[0]
+    post_title = full_return[1]
+    link_to_post = full_return[2]
+    reddit_path_to_post = full_return[3]
+    reddit_post_id = full_return[4]
+    total_votes = full_return[5]
+    total_pos_votes = full_return[6]
+    total_neg_votes = full_return[7]
+    net_sentiment = full_return[8]
+    data = time_stamp,post_title,link_to_post,reddit_path_to_post,reddit_post_id,total_votes,net_sentiment
+    dbconnect.dbLocalInsert(execute, data)
+
+dbconnect.truncateLocalTable('biz_sent_reddit')
+print('cleared table: biz_sent_reddit')
+
+def write_everything_to_post_sent_table():
+    print('beginning write to database')
+    execute = ("INSERT INTO "
+               "biz_sent_reddit"
+               "(time_stamp, reddit_text, reddit_score, reddit_post_id)"
+               "VALUES (%s,%s,%s,%s)")
+    for i in range(len(post_return)):
+        time_stamp = post_return[i][0]
+        reddit_text = post_return[i][2]
+        reddit_score = post_return[i][1]
+        reddit_post_id = full_return[4]
+        data = time_stamp, reddit_text,reddit_score, reddit_post_id
         dbconnect.dbLocalInsert(execute, data)
 
 def reddit_post_fetch(post_url):
@@ -41,16 +57,16 @@ def reddit_post_fetch(post_url):
 
 def find_sent(submissionID):
     submission = submissionID
-    tuper = ()
-    lister = []
+    tuper_unfiltered = ()
+    lister_unfiltered = []
     submission_body = submission.selftext
     submission_body_lower = submission_body.lower()
     submission_body_processed = re.sub(r'([^\sa-z])+', '', submission_body_lower)
     reddit_score = submission.score
     try:
         sentiment_value, confidence = sent.sentiment(submission_body_processed)
-        tuper = (submission_body, reddit_score, sentiment_value, confidence)
-        lister.append(tuper)
+        tuper_unfiltered = (submission_body, reddit_score, sentiment_value, confidence)
+        lister_unfiltered.append(tuper_unfiltered)
     except:
         pass
 
@@ -63,16 +79,18 @@ def find_sent(submissionID):
             reddit_score = comment_score
             try:
                 sentiment_value, confidence = sent.sentiment(comment_body_processed)
-                tuper = (comment_body, reddit_score, sentiment_value, confidence)
-                lister.append(tuper)
+                tuper_unfiltered = (comment_body, reddit_score, sentiment_value, confidence)
+                lister_unfiltered.append(tuper_unfiltered)
             except:
                 pass
         except:
             pass
-
-    return lister
+    # lister_unfiltered looks like ('Switching to Sprint is a bad idea', 31, 'neg', 1.0)
+    return lister_unfiltered
 
 def sentiment_izer(data_set):
+    tuper_filtered = ()
+    lister_filtered = []
     total_votes = 0
     for sub in data_set:
         total_votes = total_votes + sub[1]
@@ -100,6 +118,9 @@ def sentiment_izer(data_set):
                 final_sent = -1.0 * float(scale_with_vote)
                 # print(final_sent)
                 neg = neg + final_sent
+                tuper_filtered = (float(time_stamp[0]), final_sent, data_set[i][0])
+                lister_filtered.append(tuper_filtered)
+                post_return.append(tuper_filtered)
         if data_set[i][2] == 'pos':
             if data_set[i][0] == '':
                 # print('blank text for submission or comment')
@@ -115,6 +136,9 @@ def sentiment_izer(data_set):
                 final_sent = 1.0 * float(scale_with_vote)
                 # print(final_sent)
                 pos = pos + final_sent
+                tuper_filtered = (float(time_stamp[0]), final_sent, data_set[i][0])
+                lister_filtered.append(tuper_filtered)
+                post_return.append(tuper_filtered)
     # print('\n')
     total_pos = 'total positive sentiment: ' + str(pos)
     total_neg = 'total negative sentiment: ' + str(neg)
@@ -137,13 +161,17 @@ def sentiment_izer(data_set):
     full_return.append(pos)
     full_return.append(neg)
     full_return.append(net_sent)
+    # print(lister_filtered)
+    # write_everything_to_post_sent_table()
 
 def search_subreddit(subreddit_name, search_term, number_of_results, number_of_top_words):
     search = reddit.subreddit(subreddit_name)
     iterator = search.search(search_term, limit=number_of_results)
     runs = 0
     for submission in iterator:
+        submission_id = submission.id
         time_stamp_id = str(time.time())
+        time_stamp.append(time_stamp_id)
         submission_name = submission.title
         # print('Submission Title:',submission_name)
 
@@ -160,20 +188,19 @@ def search_subreddit(subreddit_name, search_term, number_of_results, number_of_t
         full_return.append(submission_name)
         full_return.append(submission_linked_url)
         full_return.append(submission_url)
+        full_return.append(submission_id)
         testing_file = find_sent(submission)
         sentiment_izer(testing_file)
         runs += 1
         write_everything_to_main_table()
         print('inserted '+str(runs)+'/'+str(number_of_results)+' results to your search into the db')
+        write_everything_to_post_sent_table()
         del full_return[:]
+        del post_return[:]
 
-sub_return = search_subreddit('orlando', 'sprint', 10, 1)
 
-#this check isn't really needed for the command line version
-# if sub_return is None:
-#     print('No results were found for your search term and subreddit combination')
-# else:
-#     pass
+
+sub_return = search_subreddit('orlando', 'sprint', 1, 1)
 
 # pickle_in = open('testing.pickle', 'rb')
 # testing_file = pickle.load(pickle_in)
