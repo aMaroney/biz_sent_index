@@ -1,7 +1,4 @@
-import sshtunnel
-import pymysql
 import db_connection_secret as dbconnect
-from decimal import Decimal
 import matplotlib.pyplot as plt
 
 pos_and_neg_totals = []
